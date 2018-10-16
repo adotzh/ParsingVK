@@ -1,18 +1,27 @@
 import scrapy
 from scrapy import Spider, Request
 import dateparser
+def parse_id(link, pointer):
+    link = str(link)
+    split = link.find(pointer) 
+    + len(pointer)
+    if link.find(pointer) == 0:
+        split = 0
+    return link[split:] 
 
 class QuotesSpider(Spider):
 
     name = "quotes"
     allowed_domains = ["vk.com"]
     
-    likes = {}
+    likes = {}     
+
     def start_requests(self):
         user_id = "1"
         main_url = 'https://vk.com/id%s' % user_id
         yield Request(url = main_url, callback = self.parse)
     
+ 
     def parse(self, response):
         result = {}
         with open('test.html', 'wb') as output_file:
@@ -46,9 +55,13 @@ class QuotesSpider(Spider):
                 result['sex'] = 'women'
             elif mass[0] == 'заходил':
                 result['sex'] = 'men'
-            for i in range(1, len(mass)):
-                date += mass[i] + ' '
-            result['last_seen'] = dateparser.parse(date)
+
+            if len(mass) > 1:
+                for i in range(1, len(mass)):
+                    date += mass[i] + ' '
+                result['last_seen'] = dateparser.parse(date)
+            else: 
+                result['last_seen'] = interim
 
         #основной блок
         interim = response.xpath('//*[@id="profile_short"]/div')
@@ -61,7 +74,7 @@ class QuotesSpider(Spider):
                     date = main.xpath('div[@class="labeled"]/a/text()').extract()
                     for i in range(len(date)):
                         full_date += date[i] + ' '
-                    result['date_of_birth'] = dateparser.parse(full_date)              
+                    result['date_of_birth'] = dateparser.parse(full_date)     
 
                 else:
                     result[main.xpath('div[@class="label fl_l"]/text()').extract_first()] = main.xpath('div[@class="labeled"]/a/text()').extract_first()
@@ -78,15 +91,15 @@ class QuotesSpider(Spider):
                     if head is not None:
                         full = path.xpath('div[@class="labeled"]/a/text()').extract()
                         if full != []:
-                            if len(full) == 3:
+                            if len(full) >= 3:
                                 full_information['link'] = response.urljoin(path.xpath('div[@class="labeled"]/a[@class="fl_r profile_career_group"]/@href').extract_first())
-                                full_information['team'] = {'name': full[1], 'link': response.urljoin(path.xpath('div[@class="labeled"]/a[2]/@href').extract_first())}
-                                full_information['possition'] = {'name': full[2], 'link': response.urljoin(path.xpath('div[@class="labeled"]/a[3]/@href').extract_first())}
+                                full_information['team'] = full[2]
+                                full_information['position'] = full[3]
                             elif len(full) == 2:
-                                full_information['team'] = {'name': full[0], 'link': response.urljoin(path.xpath('div[@class="labeled"]/a[1]/@href').extract_first()), }
-                                full_information['possition'] = {'name': full[1], 'link': response.urljoin(path.xpath('div[@class="labeled"]/a[2]/@href').extract_first())}
+                                full_information['team'] = full[0]
+                                full_information['position'] = full[1]
                             else:
-                                full_information['team'] = {'name': full[0], 'link': response.urljoin(path.xpath('div[@class="labeled"]/a[1]/@href').extract_first())}
+                                full_information['team'] = full[0]
 #                        full = path.xpath('div[@class="labeled"]/a[2]/text()').extract()
 #                        if full != []:
 #                            full_information['yet'] = full
@@ -130,6 +143,7 @@ class QuotesSpider(Spider):
         print("!!!!!!!!", photo_page)
         # yield response.follow(photo_page, self.like)
         yield result
+
     
     
 #     def like(self, response):
