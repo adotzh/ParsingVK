@@ -100,9 +100,6 @@ class QuotesSpider(Spider):
                                 full_information['position'] = full[1]
                             else:
                                 full_information['team'] = full[0]
-#                        full = path.xpath('div[@class="labeled"]/a[2]/text()').extract()
-#                        if full != []:
-#                            full_information['yet'] = full
                         if path.xpath('div[@class="labeled"]/text()').extract() != []:
                             full_information['city'] = path.xpath('div[@class="labeled"]/text()').extract_first().split(', ')[0]
                             date = str(path.xpath('div[@class="labeled"]/text()').extract_first().split(', ')[1]).split('–')
@@ -119,11 +116,39 @@ class QuotesSpider(Spider):
                         else:
                             result[big_head][head] = full_information
             elif (big_head == 'Образование'):
+                i = 0
                 for path in main.xpath('div[@class="profile_info"]/div'):
+                    i += 1
                     full_information = {}
-                    head = path.xpath('div[@class="label fl_l"]/text()').extract_first().replace(':', '')
-                    if head is not None:
-                        full = path.xpath('div[@class="labeled"]/a/text()').extract()
+                    if path.xpath('div[@class="label fl_l"]/text()').extract_first().replace(':', '') == 'Вуз':
+                        head = path.xpath('div[@class="label fl_l"]/text()').extract_first().replace(':', '')
+                        text = path.xpath('div[@class="labeled"]/a/text()').extract_first()
+                        if len(a) == 1:
+                            full_information['university'] = text[0]
+                        elif len(a) == 2:
+                            full_information['university'] = text[0]
+                            full_information['university']['year'] = text[1]
+                        for k in range(i, 100):
+                            next_page = main.xpath('div[@class="profile_info"]/div[%d]/div[@class="label fl_l"]/text()', k)
+                            if next_page != []:
+                                if next_page[0] != 'Вуз' and next_page[0] != 'Школа':
+                                    full_information[next_page[0]] = main.xpath('div[@class="profile_info"]/div[%d]/div[@class="labeled"]', k)
+                                else: 
+                                    break
+
+                        if head is not None:
+                            full = path.xpath('div[@class="labeled"]/a/text()').extract()
+                            if full != []:
+                                if len(full) >= 3:
+                                    full_information['link'] = response.urljoin(path.xpath('div[@class="labeled"]/a[@class="fl_r profile_career_group"]/@href').extract_first())
+                                    full_information['place] = full[2]
+                                    full_information['date'] = full[3]
+                                elif len(full) == 2:
+                                    full_information['place'] = full[0]
+                                    full_information['date'] = full[1].replace(" '", '20')
+                                else:
+                                    full_information['team'] = full[0]
+                        
             else:
                 for littel_main in main.xpath('div[@class="profile_info"]/div'):
                     if (littel_main.xpath('div[@class="label fl_l"]/text()').extract() != []) and (littel_main.xpath('div[@class="labeled"]/a/text()').extract() != []):
