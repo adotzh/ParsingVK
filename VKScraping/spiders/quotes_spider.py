@@ -29,6 +29,9 @@ class QuotesSpider(Spider):
         self.log('Saved file test.html')
         #загаловок страницы
         interim = response.xpath('//*[@id="page_info_wrap"]/div[1]/h2/text()').extract_first()
+        # id_personal = str(response)
+        # print('!!!!!!!', id_personal.split('/'))        
+        # result['id'] = id_personal.split('/')[len(id_personal.split('/')) - 1]
         if (interim != ''):
             interim = interim.split(' ')
             if len(interim) == 2:
@@ -117,22 +120,23 @@ class QuotesSpider(Spider):
                             result[big_head][head] = full_information
             elif (big_head == 'Образование'):
                 i = 0
-                for path in main.xpath('div[@class="profile_info"]/div'):
+                for path in main.xpath('div[@class="profile_info"]/div[@class="clear_fix profile_info_row "]'):
+                    print('!!!!!!!!!!', path)
                     i += 1
                     full_information = {}
                     if path.xpath('div[@class="label fl_l"]/text()').extract_first().replace(':', '') == 'Вуз':
                         head = path.xpath('div[@class="label fl_l"]/text()').extract_first().replace(':', '')
                         text = path.xpath('div[@class="labeled"]/a/text()').extract_first()
-                        if len(a) == 1:
+                        if len(text) == 1:
                             full_information['university'] = text[0]
-                        elif len(a) == 2:
+                        elif len(text) == 2:
                             full_information['university'] = text[0]
                             full_information['university']['year'] = text[1]
                         for k in range(i, 100):
-                            next_page = main.xpath('div[@class="profile_info"]/div[%d]/div[@class="label fl_l"]/text()', k)
+                            next_page = main.xpath('div[@class="profile_info"]/div[%d]/div[@class="label fl_l"]/text()' %k)
                             if next_page != []:
                                 if next_page[0] != 'Вуз' and next_page[0] != 'Школа':
-                                    full_information[next_page[0]] = main.xpath('div[@class="profile_info"]/div[%d]/div[@class="labeled"]', k)
+                                    full_information[next_page[0]] = main.xpath('div[@class="profile_info"]/div[%d]/div[@class="labeled"]'%k)
                                 else: 
                                     break
 
@@ -141,7 +145,7 @@ class QuotesSpider(Spider):
                             if full != []:
                                 if len(full) >= 3:
                                     full_information['link'] = response.urljoin(path.xpath('div[@class="labeled"]/a[@class="fl_r profile_career_group"]/@href').extract_first())
-                                    full_information['place] = full[2]
+                                    full_information['place'] = full[2]
                                     full_information['date'] = full[3]
                                 elif len(full) == 2:
                                     full_information['place'] = full[0]
@@ -161,11 +165,11 @@ class QuotesSpider(Spider):
                         head = littel_main.xpath('div[@class="label fl_l"]/text()').extract_first().replace(':', '')
                         result[big_head][head] = littel_main.xpath('div[@class="labeled"]/text()').extract()
         #численная информация
-        for main in response.xpath('//*[@id="wide_column"]/div[1]/div[2]/a'):
-            result[main.xpath('div[@class="label"]/text()').extract_first()] = main.xpath('div[@class="count"]/text()').extract_first()
+        # for main in response.xpath('//*[@id="wide_column"]/div[1]/div[2]/a'):
+        #     result[main.xpath('div[@class="label"]/text()').extract_first()] = main.xpath('div[@class="count"]/text()').extract_first()
 
-        photo_page = response.xpath('//*[@id="wide_column"]/div[1]/div[2]/a[2]/@href').extract_first()
-        print("!!!!!!!!", photo_page)
+        # photo_page = response.xpath('//*[@id="wide_column"]/div[1]/div[2]/a[2]/@href').extract_first()
+        # print("!!!!!!!!", photo_page)
         # yield response.follow(photo_page, self.like)
         yield result
 
