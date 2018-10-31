@@ -119,26 +119,32 @@ class QuotesSpider(Spider):
                         else:
                             result[big_head][head] = full_information
             elif (big_head == 'Образование'):
-                i = 0
-                for path in main.xpath('div[@class="profile_info"]/div[@class="clear_fix profile_info_row "]'):
-                    print('!!!!!!!!!!', path)
-                    i += 1
+                path = main.xpath('div[@class="profile_info"]/div[@class="clear_fix profile_info_row "]')
+                stack = []
+                for i in range(len(path)):
                     full_information = {}
-                    if path.xpath('div[@class="label fl_l"]/text()').extract_first().replace(':', '') == 'Вуз':
-                        head = path.xpath('div[@class="label fl_l"]/text()').extract_first().replace(':', '')
+                    place = path[i].xpath('div[@class="label fl_l"]/text()').extract_first().replace(':', '')
+                    if place == 'Вуз':
+                        head = 'university'
                         text = path.xpath('div[@class="labeled"]/a/text()').extract_first()
                         if len(text) == 1:
                             full_information['university'] = text[0]
                         elif len(text) == 2:
                             full_information['university'] = text[0]
                             full_information['university']['year'] = text[1]
-                        for k in range(i, 100):
-                            next_page = main.xpath('div[@class="profile_info"]/div[%d]/div[@class="label fl_l"]/text()' %k)
-                            if next_page != []:
-                                if next_page[0] != 'Вуз' and next_page[0] != 'Школа':
-                                    full_information[next_page[0]] = main.xpath('div[@class="profile_info"]/div[%d]/div[@class="labeled"]'%k)
-                                else: 
-                                    break
+                        for k in range(i, len(path)):
+                            if path[i + 1]:
+                                next_page = path[i].xpath('div[@class="label fl_l"]/text()').extract_first().replace(':', '')
+                                print('!!!!!!!!!!!!!!', next_page)    
+                                if next_page != []:
+                                    if next_page[0] != 'Вуз':
+                                        full_information[next_page[0]] = main.xpath('div[@class="profile_info"]/div[%d]/div[@class="labeled"]' %k)
+                                    else: 
+                                        break
+                            else:
+                                stack.append(full_information)
+                        result[big_head][head] = stack
+#                path = main.xpath('div[@class="profile_info"]/div[@class="clear_fix profile_info_row block"]')
 
                         if head is not None:
                             full = path.xpath('div[@class="labeled"]/a/text()').extract()
