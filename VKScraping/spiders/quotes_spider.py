@@ -126,24 +126,27 @@ class QuotesSpider(Spider):
                     place = path[i].xpath('div[@class="label fl_l"]/text()').extract_first().replace(':', '')
                     if place == 'Вуз':
                         head = place
-                        text = path.xpath('div[@class="labeled"]/a/text()').extract()
+                        text = path[i].xpath('div[@class="labeled"]/a/text()').extract()
                         if len(text) == 1:
-                            full_information = text[0]
+                            full_information[text[0]] = {}
                         elif len(text) == 2:
                             full_information[text[0]] = {}
                             full_information[text[0]]['year'] = text[1]
+                        else:
+                            full_information[text[0]] = {}
+                            full_information[text[0]]['add'] = text[1:]
                         for k in range(i + 1, len(path)):
                             if len(path) >= k:
                                 next_page = path[k].xpath('div[@class="label fl_l"]/text()').extract_first().replace(':', '')
-                                print('!!!!!!!!!!!!!!', next_page)    
-                                if next_page != []:
-                                    if next_page[0] != 'Вуз':
-                                        full_information[text[0]][next_page[0]] = main.xpath('div[@class="profile_info"]/div[%d]/div[@class="labeled"]' %k)
+                                if next_page != '':
+                                    if next_page != 'Вуз':
+                                        full_information[text[0]][next_page] = path[k].xpath('div[@class="labeled"]/a/text()').extract_first()
                                     else: 
                                         break
-
+                            i = k
+                    if full_information != {}:
                         stack.append(full_information)
-                    result[big_head][head] = stack
+                result[big_head][head] = stack
                 path = main.xpath('div[@class="profile_info"]/div[@class="clear_fix profile_info_row block"]')
                 stack = []
                 for i in range(len(path)):
@@ -152,44 +155,42 @@ class QuotesSpider(Spider):
                     if place != '':
                         head = place
                         text = path[i].xpath('div[@class="labeled"]/a/text()').extract()
-                        print('!!!!!!!!!!!  text%d' %i, text)
-                        if len(text) == 1:
-                            full_information = text[0]
-                        elif len(text) == 2:
+                        full_information[text[0]] = {}
+                        if len(text) == 2:
                             full_information[text[0]] = {}
-                            if len(text[1].split(',')) == 1:
-                                full_information[text[0]]['where'] = text[1].split(',')[0]
-                            elif len(text[1].split(',')) == 2:
-                                full_information[text[0]]['where'] = text[1].split(',')[0]
-                                if len(text[1].split(',')[1].split('-')) == 2:
-                                    full_information[text[0]]['from'] = text[1].split(',')[1].split('-')[0]
-                                    full_information[text[0]]['to'] = text[1].split(',')[1].split('-')[1]
-                                else:
-                                    full_information[text[0]]['year'] = text[1].split(',')[1]
-                        else:
+                            full_information[text[0]]['when'] = text[1]
+                        elif len(text) > 2:
                             full_information[text[0]] = {}
-                            if len(text[1].split(',')) == 1:
-                                full_information[text[0]]['where'] = text[1].split(',')[0]
-                            elif len(text[1].split(',')) == 2:
-                                full_information[text[0]]['where'] = text[1].split(',')[0]
-                                if len(text[1].split(',')[1].split('-')) == 2:
-                                    full_information[text[0]]['from'] = text[1].split(',')[1].split('-')[0]
-                                    full_information[text[0]]['to'] = text[1].split(',')[1].split('-')[1]
+                            full_information[text[0]]['when'] = text[1]
+                        info = path[i].xpath('div[@class="labeled"]/text()').extract_first().split(',')
+                        if info != []:
+                            full_information[text[0]]['where'] = info[0]
+                            if len(info) > 1:
+                                year = info[1].replace(' ', '').split('–')
+                                if len(year) == 2:
+                                    full_information[text[0]]['from'] = year[0]
+                                    full_information[text[0]]['to'] = year[1]
                                 else:
-                                    full_information[text[0]]['year'] = text[1].split(',')[1]
+                                    full_information[text[0]]['year'] = info[1]
                     stack.append(full_information)
                 result[big_head][head] = stack
             else:
                 for littel_main in main.xpath('div[@class="profile_info"]/div'):
                     if (littel_main.xpath('div[@class="label fl_l"]/text()').extract() != []) and (littel_main.xpath('div[@class="labeled"]/a/text()').extract() != []):
                         head = littel_main.xpath('div[@class="label fl_l"]/text()').extract_first().replace(':', '')
+                        text = littel_main.xpath('div[@class="labeled"]/a/text()').extract()
+                        print('AAAAAAAAAAAA', head, text, len(text))
                         if len(littel_main.xpath('div[@class="labeled"]/a/text()').extract()) == 1:
                             result[big_head][head] = littel_main.xpath('div[@class="labeled"]/a/text()').extract_first()
                         else:
                             result[big_head][head] = littel_main.xpath('div[@class="labeled"]/a/text()').extract()
                     else:
                         head = littel_main.xpath('div[@class="label fl_l"]/text()').extract_first().replace(':', '')
-                        result[big_head][head] = littel_main.xpath('div[@class="labeled"]/text()').extract()
+                        if len(littel_main.xpath('div[@class="labeled"]/text()').extract()) == 1:
+                            result[big_head][head] = littel_main.xpath('div[@class="labeled"]/text()').extract_first()
+                        else:
+                            result[big_head][head] = littel_main.xpath('div[@class="labeled"]/text()').extract()
+                        print('AAAAAAAAAAAA', head)
         #численная информация
         # for main in response.xpath('//*[@id="wide_column"]/div[1]/div[2]/a'):
         #     result[main.xpath('div[@class="label"]/text()').extract_first()] = main.xpath('div[@class="count"]/text()').extract_first()
