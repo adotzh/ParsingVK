@@ -12,10 +12,8 @@ def parse_id(link, pointer):
 class QuotesSpider(Spider):
 
     name = "quotes"
-    allowed_domains = ["vk.com"]
-    
+    allowed_domains = ["vk.com"] 
     likes = {}     
-
     def start_requests(self):
         user_id = "1"
         main_url = 'https://vk.com/id%s' % user_id
@@ -37,15 +35,12 @@ class QuotesSpider(Spider):
             if len(interim) == 2:
                 result['first_name'] = interim[0]
                 result['last_name'] = interim[1]
-                result['nikename'] = ''
             elif len(interim) == 3:
                 result['first_name'] = interim[0]
                 result['last_name'] = interim[2]
                 result['nikename'] = interim[1]
             else:
                 result['first_name'] = interim[0]
-                result['last_name'] = ''
-                result['nikename'] = ''
         else: 
             result['first_name'] = ''
             result['last_name'] = ''
@@ -179,7 +174,6 @@ class QuotesSpider(Spider):
                     if (littel_main.xpath('div[@class="label fl_l"]/text()').extract() != []) and (littel_main.xpath('div[@class="labeled"]/a/text()').extract() != []):
                         head = littel_main.xpath('div[@class="label fl_l"]/text()').extract_first().replace(':', '')
                         text = littel_main.xpath('div[@class="labeled"]/a/text()').extract()
-                        print('AAAAAAAAAAAA', head, text, len(text))
                         if len(littel_main.xpath('div[@class="labeled"]/a/text()').extract()) == 1:
                             result[big_head][head] = littel_main.xpath('div[@class="labeled"]/a/text()').extract_first()
                         else:
@@ -190,10 +184,9 @@ class QuotesSpider(Spider):
                             result[big_head][head] = littel_main.xpath('div[@class="labeled"]/text()').extract_first()
                         else:
                             result[big_head][head] = littel_main.xpath('div[@class="labeled"]/text()').extract()
-                        print('AAAAAAAAAAAA', head)
-        #численная информация
-        # for main in response.xpath('//*[@id="wide_column"]/div[1]/div[2]/a'):
-        #     result[main.xpath('div[@class="label"]/text()').extract_first()] = main.xpath('div[@class="count"]/text()').extract_first()
+        # численная информация
+        for main in response.xpath('//*[@id="wide_column"]/div[1]/div[2]/a'):
+            result[main.xpath('div[@class="label"]/text()').extract_first()] = main.xpath('div[@class="count"]/text()').extract_first()
 
         # photo_page = response.xpath('//*[@id="wide_column"]/div[1]/div[2]/a[2]/@href').extract_first()
         # print("!!!!!!!!", photo_page)
