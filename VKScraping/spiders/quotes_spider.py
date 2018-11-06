@@ -125,40 +125,60 @@ class QuotesSpider(Spider):
                     full_information = {}
                     place = path[i].xpath('div[@class="label fl_l"]/text()').extract_first().replace(':', '')
                     if place == 'Вуз':
-                        head = 'university'
-                        text = path.xpath('div[@class="labeled"]/a/text()').extract_first()
+                        head = place
+                        text = path.xpath('div[@class="labeled"]/a/text()').extract()
                         if len(text) == 1:
-                            full_information['university'] = text[0]
+                            full_information = text[0]
                         elif len(text) == 2:
-                            full_information['university'] = text[0]
-                            full_information['university']['year'] = text[1]
-                        for k in range(i, len(path)):
-                            if path[i + 1]:
-                                next_page = path[i].xpath('div[@class="label fl_l"]/text()').extract_first().replace(':', '')
+                            full_information[text[0]] = {}
+                            full_information[text[0]]['year'] = text[1]
+                        for k in range(i + 1, len(path)):
+                            if len(path) >= k:
+                                next_page = path[k].xpath('div[@class="label fl_l"]/text()').extract_first().replace(':', '')
                                 print('!!!!!!!!!!!!!!', next_page)    
                                 if next_page != []:
                                     if next_page[0] != 'Вуз':
-                                        full_information[next_page[0]] = main.xpath('div[@class="profile_info"]/div[%d]/div[@class="labeled"]' %k)
+                                        full_information[text[0]][next_page[0]] = main.xpath('div[@class="profile_info"]/div[%d]/div[@class="labeled"]' %k)
                                     else: 
                                         break
-                            else:
-                                stack.append(full_information)
-                        result[big_head][head] = stack
-#                path = main.xpath('div[@class="profile_info"]/div[@class="clear_fix profile_info_row block"]')
 
-                        if head is not None:
-                            full = path.xpath('div[@class="labeled"]/a/text()').extract()
-                            if full != []:
-                                if len(full) >= 3:
-                                    full_information['link'] = response.urljoin(path.xpath('div[@class="labeled"]/a[@class="fl_r profile_career_group"]/@href').extract_first())
-                                    full_information['place'] = full[2]
-                                    full_information['date'] = full[3]
-                                elif len(full) == 2:
-                                    full_information['place'] = full[0]
-                                    full_information['date'] = full[1].replace(" '", '20')
+                        stack.append(full_information)
+                    result[big_head][head] = stack
+                path = main.xpath('div[@class="profile_info"]/div[@class="clear_fix profile_info_row block"]')
+                stack = []
+                for i in range(len(path)):
+                    place = path[i].xpath('div[@class="label fl_l"]/text()').extract_first().replace(':', '')
+                    full_information = {}
+                    if place != '':
+                        head = place
+                        text = path[i].xpath('div[@class="labeled"]/a/text()').extract()
+                        print('!!!!!!!!!!!  text%d' %i, text)
+                        if len(text) == 1:
+                            full_information = text[0]
+                        elif len(text) == 2:
+                            full_information[text[0]] = {}
+                            if len(text[1].split(',')) == 1:
+                                full_information[text[0]]['where'] = text[1].split(',')[0]
+                            elif len(text[1].split(',')) == 2:
+                                full_information[text[0]]['where'] = text[1].split(',')[0]
+                                if len(text[1].split(',')[1].split('-')) == 2:
+                                    full_information[text[0]]['from'] = text[1].split(',')[1].split('-')[0]
+                                    full_information[text[0]]['to'] = text[1].split(',')[1].split('-')[1]
                                 else:
-                                    full_information['team'] = full[0]
-                        
+                                    full_information[text[0]]['year'] = text[1].split(',')[1]
+                        else:
+                            full_information[text[0]] = {}
+                            if len(text[1].split(',')) == 1:
+                                full_information[text[0]]['where'] = text[1].split(',')[0]
+                            elif len(text[1].split(',')) == 2:
+                                full_information[text[0]]['where'] = text[1].split(',')[0]
+                                if len(text[1].split(',')[1].split('-')) == 2:
+                                    full_information[text[0]]['from'] = text[1].split(',')[1].split('-')[0]
+                                    full_information[text[0]]['to'] = text[1].split(',')[1].split('-')[1]
+                                else:
+                                    full_information[text[0]]['year'] = text[1].split(',')[1]
+                    stack.append(full_information)
+                result[big_head][head] = stack
             else:
                 for littel_main in main.xpath('div[@class="profile_info"]/div'):
                     if (littel_main.xpath('div[@class="label fl_l"]/text()').extract() != []) and (littel_main.xpath('div[@class="labeled"]/a/text()').extract() != []):
